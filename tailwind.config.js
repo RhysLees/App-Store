@@ -1,16 +1,12 @@
 module.exports = {
-  mode: 'jit',
-  purge: [
-    './src/components/*.vue',
-    './src/views/*.vue',
-    './src/App.vue'
-  ],
-  darkMode: true, // or 'media' or 'class'
-  theme: {
-    extend: {},
-  },
-  variants: {
-    extend: {},
-  },
-  plugins: [],
-}
+	mode: false,
+	purge: ["./src/components/*.vue", "./src/views/*.vue", "./src/App.vue"],
+	darkMode: false, // or 'media' or 'class'
+	theme: {
+		extend: {},
+	},
+	variants: {
+		extend: {},
+	},
+	plugins: [],
+};

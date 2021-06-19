@@ -1,16 +1,17 @@
 <template>
-<div class="">
-  <img alt="Vue logo" src="../assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+<div class="bg-gray-900 text-white p-8">
+    <p v-if="loggedIn">Logged In</p>
+    <p v-if="!loggedIn">Logged Out</p>
 </div>
 </template>
 
 <script>
-import HelloWorld from '../components/HelloWorld.vue'
 export default {
   name: 'Home',
-  components: {
-    HelloWorld
+  computed: {
+    loggedIn() {
+      return this.$store.getters.loggedIn;
+    }
   }
 }
 </script>
