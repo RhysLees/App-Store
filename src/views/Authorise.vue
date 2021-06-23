@@ -1,18 +1,20 @@
 <template>
-    <div class="bg-gray-900 min-h-screen text-white p-8">
-        <login v-if="!loggedIn"/>
-        <logout v-if="loggedIn"/>
+    <div class="bg-gray-900 min-h-screen text-white">
+        <login/>
     </div>
 </template>
 
 <script>
 import Login from '../components/auth/Login.vue';
-import Logout from '../components/auth/Logout.vue';
 import { mapGetters } from 'vuex';
 export default {
     components: {
-        Login,
-        Logout
+        Login
+    },
+    created() {
+        if (this.$store.getters.getLoggedIn == true){
+            this.$router.push('home');
+        }
     },
     computed: {
         ...mapGetters({loggedIn: 'getLoggedIn'})

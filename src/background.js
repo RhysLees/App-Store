@@ -1,18 +1,33 @@
 'use strict'
 
-import { app, protocol, BrowserWindow } from 'electron'
+import { app, autoUpdater, protocol, BrowserWindow, dialog, ipcMain } from "electron";
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
-import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
+import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const log = require("electron-log");
+
+// configure logging
+const server = "https://your-deployment-url.com";
+const url = `${server}/update/${process.platform}/${app.getVersion()}`;
+
+autoUpdater.setFeedURL({ url });
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = 'info';
+log.info('App starting...');
+
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
 
+// Keep a global reference of the window object, if you don't, the window will
+// be closed automatically when the JavaScript object is garbage collected.
+let win;
+
 async function createWindow() {
   // Create the browser window.
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1200,
     height: 750,
     webPreferences: {
@@ -27,7 +42,7 @@ async function createWindow() {
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
-    // if (!process.env.IS_TEST) win.webContents.openDevTools()
+    if (!process.env.IS_TEST) win.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
@@ -57,7 +72,7 @@ app.on('ready', async () => {
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
     try {
-      await installExtension(VUEJS_DEVTOOLS)
+      await installExtension(VUEJS3_DEVTOOLS)
     } catch (e) {
       console.error('Vue Devtools failed to install:', e.toString())
     }
@@ -79,3 +94,53 @@ if (isDevelopment) {
     })
   }
 }
+
+//-------------------------------------------------------------------
+// Auto updates
+//-------------------------------------------------------------------
+setInterval(() => {
+  autoUpdater.checkForUpdates();  
+}, 10000);
+
+const sendStatusToWindow = (text) => {
+	log.info(text);
+	if (win) {
+		win.webContents.send("message", text);
+	}
+};
+
+autoUpdater.on("checking-for-update", () => {
+	sendStatusToWindow("Checking for update...");
+});
+autoUpdater.on("update-available", (info) => {
+	sendStatusToWindow("Update available.");
+});
+autoUpdater.on("update-not-available", (info) => {
+	sendStatusToWindow("Update not available.");
+});
+autoUpdater.on("download-progress", (progressObj) => {
+	sendStatusToWindow(
+		`Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred} + '/' + ${progressObj.total} + )`
+	);
+});
+
+autoUpdater.on("update-downloaded", (event, releaseNotes, releaseName) => {
+  sendStatusToWindow("Update downloaded; will install now");
+	const dialogOpts = {
+		type: "info",
+		buttons: ["Restart", "Later"],
+		title: "Application Update",
+		message: process.platform === "win32" ? releaseNotes : releaseName,
+		detail:
+			"A new version has been downloaded. Restart the application to apply the updates.",
+	};
+
+	dialog.showMessageBox(dialogOpts).then((returnValue) => {
+		if (returnValue.response === 0) autoUpdater.quitAndInstall();
+	});
+});
+
+autoUpdater.on("error", (message) => {
+    console.error("There was a problem updating the application");
+    console.error(message);
+});

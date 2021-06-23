@@ -6,21 +6,21 @@ axios.defaults.headers.post["Accept"] = "application/json";
 
 const store = new Vuex.Store({
 	state: {
-        token: localStorage.getItem("token") || null,
-        name: localStorage.getItem("name") || null,
-        icon: localStorage.getItem("icon") || null,
+		token: localStorage.getItem("token") || null,
+		name: localStorage.getItem("name") || null,
+		icon: localStorage.getItem("icon") || null,
 	},
-    getters: {
-        loggedIn(state) {
-            return state.token !== null;
-        },
-        user(state) {
-            return {
-                name: state.name || 'Login',
-                icon: state.icon,
-            }
-        }
-    },
+	getters: {
+		getLoggedIn(state) {
+			return state.token !== null;
+		},
+		getName(state) {
+			return state.name;
+		},
+		getIcon(state) {
+			return state.icon;
+		},
+	},
 	mutations: {
 		retreiveToken(state, token, name, icon) {
 			state.token = token;
@@ -51,12 +51,12 @@ const store = new Vuex.Store({
 						const icon = response.data.user.profile_photo_url;
 
 						localStorage.setItem("token", token);
-                        localStorage.setItem("name", name);
-                        localStorage.setItem("icon", icon);
-                        
-                        context.commit("retreiveToken", token, name, icon);
-                        
-						resolve(response);
+						localStorage.setItem("name", name);
+						localStorage.setItem("icon", icon);
+
+						context.commit("retreiveToken", token, name, icon);
+
+						resolve({ name, icon });
 					})
 					.catch((error) => {
 						console.log(error);
@@ -64,10 +64,28 @@ const store = new Vuex.Store({
 					});
 			});
 		},
-        destroyToken(context) {
-			axios.defaults.headers.common["Authorization"] =
-				"Bearer " + context.state.token;
-			if (context.getters.loggedIn) {
+		retreiveUser(context) {
+			if (context.getters.getLoggedIn) {
+				axios.defaults.headers.common["Authorization"] =
+					"Bearer " + context.state.token;
+				return new Promise((resolve, reject) => {
+					axios
+						.get("/user")
+						.then((response) => {
+							console.log(response);
+							
+							resolve(response);
+						})
+						.catch((error) => {
+							reject(error);
+						});
+				});
+			}
+		},
+		destroyToken(context) {
+			if (context.getters.getLoggedIn) {
+				axios.defaults.headers.common["Authorization"] =
+					"Bearer " + context.state.token;
 				return new Promise((resolve, reject) => {
 					axios
 						.post("/logout", {
@@ -79,7 +97,7 @@ const store = new Vuex.Store({
 							localStorage.removeItem("token");
 							localStorage.removeItem("name");
 							localStorage.removeItem("icon");
-							context.commit("destroyToken", null);
+							context.commit("destroyToken");
 							resolve(response);
 						})
 						.catch((error) => {
@@ -89,7 +107,16 @@ const store = new Vuex.Store({
 				});
 			}
 		},
+		destroyTokenClientOnly(context) {
+			if (context.getters.getLoggedIn) {
+				localStorage.removeItem("token");
+				localStorage.removeItem("name");
+				localStorage.removeItem("icon");
+				context.commit("destroyToken");
+			}
+		},
 	},
+	strict: false,
 });
 
 export default store;

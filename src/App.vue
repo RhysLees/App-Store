@@ -1,18 +1,43 @@
 <template>
-  <div id="app" class="flex min-h-screen font-sans">
-    <sidebar/>
-    <div class="flex-1 ml-56">
-      <router-view />
-    </div>
-  </div>
+	<div class="min-h-screen font-sans">
+		<authorise v-if="!loggedIn" />
+		<sidebar v-if="loggedIn" />
+		<div v-if="loggedIn" class="ml-56">
+			<router-view />
+		</div>
+	</div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import Sidebar from './components/Sidebar.vue';
+import Authorise from './views/Authorise.vue';
+const { ipcRenderer } = require('electron');
+ipcRenderer.on('message', function (event, text) {
+	console.log('Message from updater:', text);
+});
 export default {
-  name: 'App',
-  components: {
-    Sidebar
-  }
+	name: 'App',
+	components: {
+		Sidebar,
+		Authorise
+	},
+	created() {
+		if (this.$store.getters.loggedIn) {	
+			this.$store.dispatch('retreiveUser').then((res) => {
+				this.emitter.emit("userUpdated", res);
+            }).catch((res) => {
+				if (res.response.status == 401) {
+					this.$store.dispatch('destroyTokenClientOnly').then(() => {
+						this.$router.push('/profile')
+					})				
+				}
+				console.log(res);
+            });
+		}
+	},
+	computed: {
+		...mapGetters({loggedIn: 'getLoggedIn'})
+	}
 }
 </script>
