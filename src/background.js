@@ -1,16 +1,21 @@
 'use strict'
 
-import { app, autoUpdater, protocol, BrowserWindow, dialog, ipcMain } from "electron";
+import { app, protocol, BrowserWindow, dialog, ipcMain } from "electron";
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const log = require("electron-log");
+const { autoUpdater } = require("electron-updater")({
+	repo: "github-user/repo",
+	updateInterval: "1 hour",
+	logger: require("electron-log"),
+});
 
 // configure logging
-const server = "https://your-deployment-url.com";
-const url = `${server}/update/${process.platform}/${app.getVersion()}`;
+// const server = "https://your-deployment-url.com";
+// const url = `${server}/update/${process.platform}/${app.getVersion()}`;
 
-autoUpdater.setFeedURL({ url });
+// autoUpdater.setFeedURL({ url });
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 log.info('App starting...');
