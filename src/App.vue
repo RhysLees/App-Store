@@ -20,28 +20,31 @@ export default {
 		Authorise
 	},
 	created() {
-		ipcRenderer.send('app_version');
 		ipcRenderer.send('app_check_update');
-		ipcRenderer.on('app_version', (event, arg) => {
-			ipcRenderer.removeAllListeners('app_version');
-			console.log(arg.version);
+		ipcRenderer.on('update_available', () => {
+			ipcRenderer.removeAllListeners('update_available');
+			this.$router.push('/update');
 		});
-		ipcRenderer.on('message', function (event, text) {
-			console.log('Message from updater:', text);
-		});
+
 		if (this.$store.getters.loggedIn) {	
 			this.$store.dispatch('retreiveUser').then((res) => {
 				this.emitter.emit("userUpdated", res);
-				this.$router.push('/')
+				this.$router.push('/');
             }).catch((res) => {
 				if (res.response.status == 401) {
 					this.$store.dispatch('destroyTokenClientOnly').then(() => {
-						this.$router.push('/profile')
+						this.$router.push('/profile');
 					})				
 				}
 				console.log(res);
             });
 		}
+
+		
+
+		// ipcRenderer.on('message', function (event, text) {
+		// 	console.log('Message from updater:', text);
+		// });
 	},
 	computed: {
 		...mapGetters({loggedIn: 'getLoggedIn'})
