@@ -1,4 +1,4 @@
-import { createWebHistory, createRouter } from "vue-router";
+import { createWebHistory, createWebHashHistory, createRouter } from "vue-router";
 import Home from "@/views/Home.vue";
 import About from "@/views/About.vue";
 import Profile from "@/views/Profile.vue";
@@ -28,7 +28,9 @@ const routes = [
 ];
 
 const router = createRouter({
-	history: createWebHistory(),
+	history: process.env.IS_ELECTRON
+		? createWebHashHistory()
+		: createWebHistory(),
 	routes,
 });
 

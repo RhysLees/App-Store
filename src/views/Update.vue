@@ -7,18 +7,22 @@
         <div v-if="update.show" class="text-center mt-8">
             <p>Release Date: {{ update.releaseDate }}</p>
             <p>Release Name: {{ update.releaseName }}</p>
-            <p>Release Notes: {{ update.releaseNotes }}</p>
+            <p>Release Notes:</p>
+            <p v-html="update.releaseNotes"></p>
             <p>Version: {{ update.version }}</p>
             <p>Available: {{ update.available }}</p>
 
-            <div v-if="!update.downloaded">
-                <button @click="download" class="mt-4 bg-white hover:bg-gray-200 w-full text-black p-2 font-bold border-gray-300 border rounded">Download</button>
-                <div class="shadow w-full bg-grey-light rounded mt-4">
-                    <div class="bg-blue-500 text-xs leading-none py-1 text-center text-white rounded" style="width: 45%">45%</div>
+            <div v-if="update.available"> 
+                <div v-if="!update.downloaded">
+                    <button @click="download" class="mt-4 bg-white hover:bg-gray-200 w-full text-black p-2 font-bold border-gray-300 border rounded">Download</button>
+                    <div class="shadow w-full bg-grey-200 rounded mt-4">
+                        <div class="bg-blue-500 text-xs leading-none py-1 text-center text-white rounded" 
+                        :style="{width: update.downloadPercentage}">{{ update.downloadPercentage }}</div>
+                    </div>
                 </div>
-            </div>
-            <div v-if="update.downloaded">
-                <button @click="install" class="mt-4 bg-white hover:bg-gray-200 w-full text-black p-2 font-bold border-gray-300 border rounded">Install & Restart</button>
+                <div v-if="update.downloaded">
+                    <button @click="install" class="mt-4 bg-white hover:bg-gray-200 w-full text-black p-2 font-bold border-gray-300 border rounded">Install & Restart</button>
+                </div>
             </div>
   
         </div>
@@ -41,7 +45,8 @@ export default {
                 version: null,
                 available: false,
                 show: false,
-                downloaded: false
+                downloaded: false,
+                downloadPercentage: '0%'
             },
         }
     },
@@ -86,7 +91,7 @@ export default {
 		});
         
         ipcRenderer.on('download_percent', (event, args) => {
-			console.log(args);
+            this.downloadPercentage = Math.trunc(args.percent)+'%';
 		});
         
         ipcRenderer.on('update_downloaded', () => {
