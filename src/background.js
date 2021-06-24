@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, protocol, BrowserWindow, dialog, ipcMain,globalShortcut } from "electron";
+import { app, protocol, BrowserWindow, Menu, dialog, ipcMain,globalShortcut } from "electron";
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
@@ -31,7 +31,9 @@ async function createWindow() {
     }
   })
 
-  win.removeMenu();
+  const template = [];
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
