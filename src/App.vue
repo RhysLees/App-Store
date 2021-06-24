@@ -32,6 +32,7 @@ export default {
 		if (this.$store.getters.loggedIn) {	
 			this.$store.dispatch('retreiveUser').then((res) => {
 				this.emitter.emit("userUpdated", res);
+				this.$router.push('/')
             }).catch((res) => {
 				if (res.response.status == 401) {
 					this.$store.dispatch('destroyTokenClientOnly').then(() => {
