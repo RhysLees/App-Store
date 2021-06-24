@@ -5,7 +5,7 @@ module.exports = {
 			builderOptions: {
 				publish: [
 					{
-						private: true,
+						private: false,
 						provider: "github",
 						owner: "NanoCellWebDesign",
 						repo: "App-Store",
@@ -14,5 +14,11 @@ module.exports = {
 				],
 			},
 		},
+	},
+	configureWebpack: {
+		plugins: [
+			require('tailwindcss'),
+			require('autoprefixer'),
+		],
 	},
 };

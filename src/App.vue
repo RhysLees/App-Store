@@ -13,9 +13,6 @@ import { mapGetters } from 'vuex';
 import Sidebar from './components/Sidebar.vue';
 import Authorise from './views/Authorise.vue';
 const { ipcRenderer } = require('electron');
-ipcRenderer.on('message', function (event, text) {
-	console.log('Message from updater:', text);
-});
 export default {
 	name: 'App',
 	components: {
@@ -23,6 +20,15 @@ export default {
 		Authorise
 	},
 	created() {
+		ipcRenderer.send('app_version');
+		ipcRenderer.send('app_check_update');
+		ipcRenderer.on('app_version', (event, arg) => {
+			ipcRenderer.removeAllListeners('app_version');
+			console.log(arg.version);
+		});
+		ipcRenderer.on('message', function (event, text) {
+			console.log('Message from updater:', text);
+		});
 		if (this.$store.getters.loggedIn) {	
 			this.$store.dispatch('retreiveUser').then((res) => {
 				this.emitter.emit("userUpdated", res);

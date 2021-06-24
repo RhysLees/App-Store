@@ -2,7 +2,7 @@
 
 import { app, protocol, BrowserWindow, dialog, ipcMain } from "electron";
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
-import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
+import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 import { autoUpdater } from "electron-updater";
@@ -39,8 +39,11 @@ async function createWindow() {
     createProtocol('app')
     // Load the index.html when not in development
     win.loadURL('app://./index.html')
-    autoUpdater.checkForUpdatesAndNotify();
   }
+
+  win.once("ready-to-show", () => {
+		// autoUpdater.checkForUpdatesAndNotify();
+	});
 }
 
 // Quit when all windows are closed.
@@ -65,7 +68,7 @@ app.on('ready', async () => {
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
     try {
-      await installExtension(VUEJS3_DEVTOOLS)
+      await installExtension(VUEJS_DEVTOOLS)
     } catch (e) {
       console.error('Vue Devtools failed to install:', e.toString())
     }
@@ -88,14 +91,18 @@ if (isDevelopment) {
   }
 }
 
+ipcMain.on("app_version", (event) => {
+	event.sender.send("app_version", { version: app.getVersion() });
+});
+ipcMain.on("app_check_update", (event) => {
+	autoUpdater.checkForUpdates();
+});
+
 //-------------------------------------------------------------------
 // Auto updates
 //-------------------------------------------------------------------
 const sendStatusToWindow = (text) => {
-	log.info(text);
-	if (win) {
-		win.webContents.send("message", text);
-	}
+	win.webContents.send("message", text);
 };
 
 autoUpdater.on("checking-for-update", () => {
