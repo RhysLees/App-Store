@@ -21,6 +21,7 @@
     "electron-log": "^4.3.5",
     "electron-updater": "^4.3.9",
     "mitt": "^2.1.0",
+    "moment": "^2.29.1",
     "postcss": "^7",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.2",
     "update-electron-app": "^2.0.1",

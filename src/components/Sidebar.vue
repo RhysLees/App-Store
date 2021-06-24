@@ -12,6 +12,11 @@
           <div class="text-white">Home</div>
         </router-link>
       </div>
+      <div class="">
+        <router-link to="/update" class="flex items-center px-4 py-2 text-grey no-underline cursor-pointer hover:bg-grey-darker">
+          <div class="text-white">Updater</div>
+        </router-link>
+      </div>
 
       <user/>
     

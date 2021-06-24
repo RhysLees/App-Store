@@ -1,8 +1,8 @@
 'use strict'
 
-import { app, protocol, BrowserWindow, dialog, ipcMain } from "electron";
+import { app, protocol, BrowserWindow, dialog, ipcMain,globalShortcut } from "electron";
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
-import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
+import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 import { autoUpdater } from "electron-updater";
@@ -31,6 +31,8 @@ async function createWindow() {
     }
   })
 
+  win.removeMenu();
+
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
@@ -39,12 +41,14 @@ async function createWindow() {
     createProtocol('app')
     // Load the index.html when not in development
     win.loadURL('app://./index.html')
+    // win.loadURL(path.join(__dirname, "index.html" + to));
   }
 
-  win.once("ready-to-show", () => {
-		// autoUpdater.checkForUpdatesAndNotify();
-	});
+  // win.once("ready-to-show", () => {
+  //   autoUpdater.checkForUpdates();
+  // });
 }
+
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -68,10 +72,13 @@ app.on('ready', async () => {
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
     try {
-      await installExtension(VUEJS_DEVTOOLS)
+      await installExtension(VUEJS3_DEVTOOLS)
     } catch (e) {
       console.error('Vue Devtools failed to install:', e.toString())
     }
+  } else {
+      globalShortcut.register("CommandOrControl+R", () => false);
+			globalShortcut.register("F5", () => false);
   }
   createWindow()
 })
@@ -95,7 +102,15 @@ ipcMain.on("app_version", (event) => {
 	event.sender.send("app_version", { version: app.getVersion() });
 });
 ipcMain.on("app_check_update", (event) => {
-	autoUpdater.checkForUpdates();
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = false;
+  autoUpdater.checkForUpdates();
+});
+ipcMain.on("app_update_download", (event) => {
+	autoUpdater.downloadUpdate();
+});
+ipcMain.on("app_update_install", (event) => {
+	autoUpdater.quitAndInstall();
 });
 
 //-------------------------------------------------------------------
@@ -106,37 +121,46 @@ const sendStatusToWindow = (text) => {
 };
 
 autoUpdater.on("checking-for-update", () => {
-	sendStatusToWindow("Checking for update...");
+  sendStatusToWindow("Checking for update...");
+  win.webContents.send("update_check");
 });
 autoUpdater.on("update-available", (info) => {
-	sendStatusToWindow("Update available.");
+  sendStatusToWindow("Update available.");
+  win.webContents.send("update_available", info);
 });
 autoUpdater.on("update-not-available", (info) => {
-	sendStatusToWindow("Update not available.");
+  sendStatusToWindow("Update not available.");
+  win.webContents.send("update_not_available", info);
 });
 autoUpdater.on("download-progress", (progressObj) => {
 	sendStatusToWindow(
 		`Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred} + '/' + ${progressObj.total} + )`
-	);
+  );
+  win.webContents.send("download_percent", progressObj);
 });
 
 autoUpdater.on("update-downloaded", (event, releaseNotes, releaseName) => {
+  win.webContents.send("update_downloaded");
   sendStatusToWindow("Update downloaded; will install now");
-	const dialogOpts = {
-		type: "info",
-		buttons: ["Restart", "Later"],
-		title: "Application Update",
-		message: process.platform === "win32" ? releaseNotes : releaseName,
-		detail:
-			"A new version has been downloaded. Restart the application to apply the updates.",
-	};
 
-	dialog.showMessageBox(dialogOpts).then((returnValue) => {
-		if (returnValue.response === 0) autoUpdater.quitAndInstall();
-	});
+	// const dialogOpts = {
+	// 	type: "info",
+	// 	buttons: ["Restart", "Later"],
+	// 	title: "Application Update",
+	// 	message: process.platform === "win32" ? releaseNotes : releaseName,
+	// 	detail:
+	// 		"A new version has been downloaded. Restart the application to apply the updates.",
+	// };
+
+	// dialog.showMessageBox(dialogOpts).then((returnValue) => {
+	// 	if (returnValue.response === 0) autoUpdater.quitAndInstall();
+	// });
 });
 
 autoUpdater.on("error", (message) => {
-    console.error("There was a problem updating the application");
-    console.error(message);
+  win.webContents.send("update_error", message);
+
+  console.error("There was a problem updating the application");
+  console.error(message);
+  
 });
