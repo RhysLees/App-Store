@@ -1,27 +1,26 @@
 <template>
     <div class="bg-gray-900 text-white p-8 w-full min-h-screen flex flex-col justify-center items-center">
-        <div class="text-center">
+        <div class="w-full max-w-lg">
             <p>Current Version: {{ currentVersion }}</p>
-            <p>{{ status }}</p>
         </div>
-        <div v-if="update.show" class="text-center mt-8">
-            <p>Release Date: {{ update.releaseDate }}</p>
-            <p>Release Name: {{ update.releaseName }}</p>
-            <p>Release Notes:</p>
-            <p v-html="update.releaseNotes"></p>
-            <p>Version: {{ update.version }}</p>
-            <p>Available: {{ update.available }}</p>
+        <div v-if="update.show" class="w-full max-w-lg mt-12">
+            <p>Latest Release Version: {{ update.version }}</p>
+            <p>Latest Release Date: {{ update.releaseDate }}</p>
+            <div class="my-4">
+                <p>Release Notes:</p>
+                <p v-html="update.releaseNotes"></p>
+            </div>
 
             <div v-if="update.available"> 
                 <div v-if="!update.downloaded">
-                    <button @click="download" class="mt-4 bg-white hover:bg-gray-200 w-full text-black p-2 font-bold border-gray-300 border rounded">Download</button>
-                    <div class="shadow w-full bg-grey-200 rounded mt-4">
-                        <div class="bg-blue-500 text-xs leading-none py-1 text-center text-white rounded" 
-                        :style="{width: update.downloadPercentage}">{{ update.downloadPercentage }}</div>
-                    </div>
+                    <button @click="download" :disabled="update.downloading" class="mt-4 bg-white hover:bg-gray-200 w-full text-black p-2 font-bold border-gray-300 border rounded">Download</button>
                 </div>
                 <div v-if="update.downloaded">
                     <button @click="install" class="mt-4 bg-white hover:bg-gray-200 w-full text-black p-2 font-bold border-gray-300 border rounded">Install & Restart</button>
+                </div>
+                <div class="shadow w-full bg-grey-200 rounded mt-4">
+                    <div class="bg-blue-500 text-xs leading-none py-1 text-center text-white rounded" 
+                    :style="{width: update.downloadPercentage}">{{ update.downloadPercentage }}</div>
                 </div>
             </div>
   
@@ -46,6 +45,7 @@ export default {
                 available: false,
                 show: false,
                 downloaded: false,
+                downloading: false,
                 downloadPercentage: '0%'
             },
         }
@@ -103,6 +103,7 @@ export default {
     methods: {
         download() {
             ipcRenderer.send('app_update_download');
+            this.update.downloading = true;
         },
         install() {
             ipcRenderer.send('app_update_install');
